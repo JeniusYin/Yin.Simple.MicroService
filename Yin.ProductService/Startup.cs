@@ -32,10 +32,10 @@ namespace Yin.ProductService
                 app.UseDeveloperExceptionPage();
             }
 
-            Uri uri = new Uri(Configuration["urls"]);
+            Uri uri = new(Configuration["urls"]);
             app.RegisterConsul(lifetime, new ConsulOption
             {
-                CousulAddress = Configuration["ConsulAddress"],
+                CousulAddress = Configuration["Consul:ConsulAddress"],
                 ServiceName = "Product",
                 ServiceAddress = uri.Host,
                 ServicePort = uri.Port
