@@ -1,0 +1,113 @@
+{
+  "GlobalConfiguration": {
+    //服务发现提供程序
+    "ServiceDiscoveryProvider": {
+      "Host": "127.0.0.1",
+      "Port": 8500,
+      "Type": "Consul"
+    },
+    //外部访问路径
+    //"BaseUrl": "http://localhost:6543",
+    //限速配置
+    "RateLimitOptions": {
+      //白名单
+      "ClientWhitelist": [],
+      "EnableRateLimiting": true,
+      //限制时间段，例如1s，5m，1h，1d
+      "Period": "1s",
+      //重试等待的时间间隔（秒）
+      "PeriodTimespan": 1,
+      //限制
+      "Limit": 5,
+      //自定义消息
+      "QuotaExceededMessage": "单位时间内请求次数超过限制！",
+      "HttpStatusCode": 999
+    },
+    //熔断配置
+    "QoSOptions": {
+      "ExceptionsAllowedBeforeBreaking": 3,
+      "DurationOfBreak": 5,
+      //超时值(毫秒)
+      "TimeoutValue": 5000
+    }
+  },
+  "Routes": [
+    {
+      //下游的路由模板，即真实处理请求的路径模板
+      "DownstreamPathTemplate": "/api/{url}",
+      "DownstreamScheme": "http",
+      //"DownstreamHostAndPorts": [
+      //{
+      //  "Host": "localhost",
+      //  "Port": 5601
+      //},
+      //{
+      //  "Host": "localhost",
+      //  "Port": 5602
+      //}
+      //],
+      //上游请求的模板，即用户请求的链接,
+      "UpstreamPathTemplate": "/u/{url}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Delete", "Put" ],
+      "ServiceName": "User",
+      "UseServiceDiscovery": true,
+      //负载均衡选项（DownstreamHostAndPorts有多个的时候才能看到效果），有三种方式
+      //1."LeastConnection": "将请求发往最空闲的那个服务器",
+      //2."RoundRobin" "：轮流发送",
+      //3."NoLoadBalance" "：不启用负载均衡，总是发往第一个请求或者服务发现的那个服务器",
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10,
+        "TimeoutValue": 5000
+      },
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "UserServiceKey",
+        "AllowedScopes": [
+        ]
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/{url}",
+      "DownstreamScheme": "http",
+      //"DownstreamHostAndPorts": [
+      //  {
+      //    "Host": "localhost",
+      //    "Port": 5603
+      //  }
+      //],
+      "UpstreamPathTemplate": "/p/{url}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Delete", "Put" ],
+      "ServiceName": "Product",
+      "UseServiceDiscovery": true,
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10,
+        "TimeoutValue": 5000
+      },
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "ProductServiceKey",
+        "AllowedScopes": [
+        ]
+      }
+    },
+    //把认证授权服务器也配置进来,但它不再Ocelot层次上加密,单纯的进行转发
+    {
+      "DownstreamPathTemplate": "/connect/token",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "127.0.0.1",
+          "Port": 7051
+        }
+      ],
+      "UpstreamPathTemplate": "/token",
+      "UpstreamHttpMethod": ["Post"]
+    }
+  ]
+}
